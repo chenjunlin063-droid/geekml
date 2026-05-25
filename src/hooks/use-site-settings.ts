@@ -24,6 +24,7 @@ const DEFAULTS: SiteSettings = {
 export function useSiteSettings() {
   return useQuery({
     queryKey: ["site_settings"],
+    enabled: typeof window !== "undefined",
     queryFn: async (): Promise<SiteSettings> => {
       const { data, error } = await supabase.from("site_settings").select("key,value");
       if (error) throw error;
@@ -35,3 +36,4 @@ export function useSiteSettings() {
     },
   });
 }
+
