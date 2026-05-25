@@ -97,6 +97,7 @@ function AdminPanel() {
         <TabsList>
           <TabsTrigger value="softwares">软件 ({softwares?.length ?? 0})</TabsTrigger>
           <TabsTrigger value="categories">分类 ({categories?.length ?? 0})</TabsTrigger>
+          <TabsTrigger value="site">界面设置</TabsTrigger>
         </TabsList>
 
         <TabsContent value="softwares" className="mt-4">
@@ -104,6 +105,9 @@ function AdminPanel() {
         </TabsContent>
         <TabsContent value="categories" className="mt-4">
           <CategoryManager categories={categories ?? []} onChange={refresh} />
+        </TabsContent>
+        <TabsContent value="site" className="mt-4">
+          <SiteSettingsManager />
         </TabsContent>
       </Tabs>
     </main>
