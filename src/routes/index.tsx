@@ -5,9 +5,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search } from "lucide-react";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 export const Route = createFileRoute("/")({
   component: Index,
+  head: () => ({
+    meta: [{ title: "极客软件目录" }],
+  }),
 });
 
 type Category = { id: string; name: string; sort_order: number };
@@ -15,6 +19,7 @@ type Software = { id: string; category_id: string; name: string; url: string; de
 
 function Index() {
   const [q, setQ] = useState("");
+  const { data: settings } = useSiteSettings();
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
@@ -56,23 +61,33 @@ function Index() {
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
-      <section className="mb-8 text-center">
+      <header className="mb-8 text-center">
+        {settings?.logo_url ? (
+          <img
+            src={settings.logo_url}
+            alt={settings.site_name}
+            className="mx-auto mb-4 h-16 w-auto object-contain"
+          />
+        ) : null}
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-          极客软件目录
+          {settings?.hero_title || "极客软件目录"}
         </h1>
         <p className="mt-2 text-muted-foreground">
-          精选 {total} 款软件、网站与教程，点击名称即可查看对应文章
+          {(settings?.hero_subtitle || "").replace("{count}", String(total))}
+          {settings?.hero_subtitle?.includes("{count}") ? null : (
+            <span className="ml-1 text-xs">（共 {total} 项）</span>
+          )}
         </p>
         <div className="mt-5 relative max-w-md mx-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="搜索软件名称或说明..."
+            placeholder={settings?.search_placeholder || "搜索..."}
             className="pl-9"
           />
         </div>
-      </section>
+      </header>
 
       <nav className="mb-6 flex flex-wrap gap-2 justify-center">
         {(categories ?? []).map((c) => (
@@ -146,6 +161,12 @@ function Index() {
           </div>
         )}
       </div>
+
+      {settings?.footer_text ? (
+        <footer className="mt-16 pt-8 border-t text-center text-sm text-muted-foreground">
+          {settings.footer_text}
+        </footer>
+      ) : null}
     </main>
   );
 }
