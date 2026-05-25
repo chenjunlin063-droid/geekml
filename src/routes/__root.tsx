@@ -93,15 +93,56 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+const SOCIAL_ICONS: Record<string, string> = {
+  qq: "M12 2C7.03 2 3 6.03 3 11c0 2.5 1.02 4.76 2.66 6.39-.18.66-.6 1.84-1.21 2.61-.18.23-.02.55.27.5 1.36-.22 2.61-.74 3.43-1.16.95.42 1.99.66 3.07.66 4.97 0 9-4.03 9-9s-4.03-9-9-9z",
+  wechat: "M8.5 5C4.91 5 2 7.46 2 10.5c0 1.76 1 3.33 2.54 4.36L4 17l2.3-1.18c.66.13 1.36.2 2.08.2.16 0 .32-.01.47-.02-.16-.5-.25-1.02-.25-1.55 0-2.97 2.86-5.38 6.4-5.38.18 0 .35.01.53.02C14.96 6.61 12.04 5 8.5 5zm-2 3a.75.75 0 110 1.5.75.75 0 010-1.5zm4 0a.75.75 0 110 1.5.75.75 0 010-1.5zm5.5 2.5c-3.04 0-5.5 2.01-5.5 4.5s2.46 4.5 5.5 4.5c.6 0 1.18-.08 1.72-.23L20 20l-.43-1.35c1.5-.83 2.43-2.16 2.43-3.65 0-2.49-2.46-4.5-5.5-4.5zm-1.75 2a.6.6 0 110 1.2.6.6 0 010-1.2zm3.5 0a.6.6 0 110 1.2.6.6 0 010-1.2z",
+  bilibili: "M17.8 3.5l-1.4 1.4-2-2H9.6l-2 2L6.2 3.5 4.8 4.9l1.4 1.4H5a3 3 0 00-3 3v7a3 3 0 003 3h14a3 3 0 003-3v-7a3 3 0 00-3-3h-1.2l1.4-1.4-1.4-1.4zM8 11a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1zm8 0a1 1 0 011 1v2a1 1 0 11-2 0v-2a1 1 0 011-1z",
+  official: "M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2zm0 4v10h16V8l-8 5-8-5zm0-2l8 5 8-5H4z",
+};
+
+function SocialLinks() {
+  const { data: settings } = useSiteSettings();
+  const items = [
+    { key: "qq", label: "QQ", value: settings.social_qq },
+    { key: "wechat", label: "微信", value: settings.social_wechat },
+    { key: "bilibili", label: "哔哩哔哩", value: settings.social_bilibili },
+    { key: "official", label: "公众号", value: settings.social_official },
+  ].filter((i) => i.value);
+  if (items.length === 0) return null;
+  return (
+    <div className="flex justify-center gap-3 mb-3">
+      {items.map((i) => {
+        const isUrl = /^https?:\/\//i.test(i.value);
+        const inner = (
+          <span
+            className="inline-flex items-center justify-center size-9 rounded-full border bg-card text-muted-foreground hover:text-primary hover:border-primary transition"
+            title={isUrl ? i.label : `${i.label}: ${i.value}`}
+            aria-label={i.label}
+          >
+            <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden="true">
+              <path d={SOCIAL_ICONS[i.key]} />
+            </svg>
+          </span>
+        );
+        return isUrl ? (
+          <a key={i.key} href={i.value} target="_blank" rel="noopener noreferrer">{inner}</a>
+        ) : (
+          <span key={i.key} className="cursor-help">{inner}</span>
+        );
+      })}
+    </div>
+  );
+}
+
 function SiteChrome() {
   const { data: settings } = useSiteSettings();
-  const siteName = settings?.site_name || "极客软件馆";
+  const siteName = settings.site_name || "极客软件馆";
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <header className="border-b bg-card/70 backdrop-blur sticky top-0 z-10">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
+        <div className="mx-auto max-w-7xl px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-            {settings?.logo_url ? (
+            {settings.logo_url ? (
               <img src={settings.logo_url} alt={siteName} className="size-7 rounded-md object-contain" />
             ) : (
               <span className="inline-block size-7 rounded-md bg-primary text-primary-foreground grid place-items-center text-sm">
@@ -116,8 +157,11 @@ function SiteChrome() {
           </nav>
         </div>
       </header>
-      <Outlet />
+      <div className="flex-1">
+        <Outlet />
+      </div>
       <footer className="border-t mt-12 py-6 text-center text-xs text-muted-foreground">
+        <SocialLinks />
         © {new Date().getFullYear()} {siteName} · 持续更新
       </footer>
     </div>

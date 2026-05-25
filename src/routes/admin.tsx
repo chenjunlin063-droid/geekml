@@ -411,12 +411,16 @@ function SiteSettingsManager() {
   const current = { ...(settings ?? {}), ...form };
 
   const fields: { key: string; label: string; placeholder?: string; textarea?: boolean }[] = [
-    { key: "site_name", label: "网站名称", placeholder: "极客软件目录" },
+    { key: "site_name", label: "网站名称", placeholder: "极客软件馆" },
     { key: "hero_title", label: "首页大标题" },
     { key: "hero_subtitle", label: "首页副标题（可用 {count} 表示软件总数）" },
     { key: "search_placeholder", label: "搜索框占位文字" },
     { key: "footer_text", label: "页脚文字" },
     { key: "meta_description", label: "SEO 描述" },
+    { key: "social_qq", label: "QQ（群链接或号码）", placeholder: "https://qm.qq.com/... 或 群号" },
+    { key: "social_wechat", label: "微信（微信号或链接）", placeholder: "微信号 或 链接" },
+    { key: "social_bilibili", label: "B 站主页链接", placeholder: "https://space.bilibili.com/..." },
+    { key: "social_official", label: "公众号（名称或链接）", placeholder: "公众号名称 或 文章链接" },
   ];
 
   async function uploadLogo(file: File) {
