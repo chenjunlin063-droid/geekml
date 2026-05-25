@@ -52,6 +52,7 @@ function Admin() {
 function AdminPanel() {
   const qc = useQueryClient();
   const navigate = useNavigate();
+  const { data: settings } = useSiteSettings();
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
