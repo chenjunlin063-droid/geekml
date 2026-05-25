@@ -95,14 +95,22 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const { data: settings } = useSiteSettings();
+  const siteName = settings?.site_name || "极客软件馆";
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-background text-foreground">
         <header className="border-b bg-card/70 backdrop-blur sticky top-0 z-10">
           <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
             <Link to="/" className="flex items-center gap-2 font-bold text-lg">
-              <span className="inline-block size-7 rounded-md bg-primary text-primary-foreground grid place-items-center text-sm">极</span>
-              极客软件馆
+              {settings?.logo_url ? (
+                <img src={settings.logo_url} alt={siteName} className="size-7 rounded-md object-contain" />
+              ) : (
+                <span className="inline-block size-7 rounded-md bg-primary text-primary-foreground grid place-items-center text-sm">
+                  {siteName.charAt(0)}
+                </span>
+              )}
+              {siteName}
             </Link>
             <nav className="flex items-center gap-4 text-sm">
               <Link to="/" className="hover:text-primary [&.active]:text-primary">首页</Link>
@@ -112,7 +120,7 @@ function RootComponent() {
         </header>
         <Outlet />
         <footer className="border-t mt-12 py-6 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} 极客软件馆 · 持续更新
+          © {new Date().getFullYear()} {siteName} · 持续更新
         </footer>
       </div>
       <Toaster richColors position="top-center" />
