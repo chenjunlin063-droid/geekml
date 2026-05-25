@@ -379,3 +379,108 @@ function CategoryRow({
     </TableRow>
   );
 }
+
+/* ------------------- Site settings manager ------------------- */
+function SiteSettingsManager() {
+  const qc = useQueryClient();
+  const { data: settings, isLoading } = useQuery({
+    queryKey: ["site_settings_admin"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("site_settings").select("key,value");
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const r of data ?? []) map[r.key] = r.value ?? "";
+      return map;
+    },
+  });
+
+  const [form, setForm] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const current = { ...(settings ?? {}), ...form };
+
+  const fields: { key: string; label: string; placeholder?: string; textarea?: boolean }[] = [
+    { key: "site_name", label: "网站名称", placeholder: "极客软件目录" },
+    { key: "hero_title", label: "首页大标题" },
+    { key: "hero_subtitle", label: "首页副标题（可用 {count} 表示软件总数）" },
+    { key: "search_placeholder", label: "搜索框占位文字" },
+    { key: "footer_text", label: "页脚文字" },
+    { key: "meta_description", label: "SEO 描述" },
+  ];
+
+  async function uploadLogo(file: File) {
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `logo-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
+    if (error) { setUploading(false); return toast.error(error.message); }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setForm((f) => ({ ...f, logo_url: data.publicUrl }));
+    setUploading(false);
+    toast.success("已上传，记得点击保存");
+  }
+
+  async function save() {
+    setBusy(true);
+    const rows = Object.entries(current).map(([key, value]) => ({ key, value }));
+    const { error } = await supabase.from("site_settings").upsert(rows, { onConflict: "key" });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("已保存");
+    setForm({});
+    qc.invalidateQueries({ queryKey: ["site_settings_admin"] });
+    qc.invalidateQueries({ queryKey: ["site_settings"] });
+  }
+
+  if (isLoading) return <div className="text-muted-foreground text-sm">加载中...</div>;
+
+  return (
+    <Card>
+      <CardHeader><CardTitle>界面与品牌设置</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        <div>
+          <Label>Logo</Label>
+          <div className="flex items-center gap-3 mt-1">
+            {current.logo_url ? (
+              <img src={current.logo_url} alt="logo" className="h-12 w-auto border rounded bg-card p-1" />
+            ) : (
+              <div className="h-12 w-12 border rounded flex items-center justify-center text-xs text-muted-foreground">无</div>
+            )}
+            <Input
+              type="file"
+              accept="image/*"
+              className="max-w-xs"
+              disabled={uploading}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }}
+            />
+            {current.logo_url && (
+              <Button variant="ghost" size="sm" onClick={() => setForm((f) => ({ ...f, logo_url: "" }))}>
+                移除
+              </Button>
+            )}
+          </div>
+          <Input
+            className="mt-2"
+            placeholder="或直接粘贴 Logo URL"
+            value={current.logo_url ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, logo_url: e.target.value }))}
+          />
+        </div>
+
+        {fields.map((f) => (
+          <div key={f.key}>
+            <Label>{f.label}</Label>
+            <Input
+              value={current[f.key] ?? ""}
+              placeholder={f.placeholder}
+              onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
+            />
+          </div>
+        ))}
+
+        <Button disabled={busy} onClick={save}>{busy ? "保存中..." : "保存设置"}</Button>
+      </CardContent>
+    </Card>
+  );
+}
