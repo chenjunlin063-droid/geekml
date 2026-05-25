@@ -79,7 +79,15 @@ function AdminPanel() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">后台管理</h1>
+        <div className="flex items-center gap-3">
+          {settings?.logo_url ? (
+            <img src={settings.logo_url} alt="logo" className="h-8 w-auto" />
+          ) : null}
+          <div>
+            <h1 className="text-2xl font-bold leading-none">{settings?.site_name || "后台管理"}</h1>
+            <p className="text-xs text-muted-foreground mt-1">管理中心</p>
+          </div>
+        </div>
         <div className="flex gap-2">
           <Link to="/" className="text-sm text-muted-foreground hover:text-primary self-center">← 返回首页</Link>
           <Button
