@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search } from "lucide-react";
-import { useSiteSettings, siteSettingsQueryOptions } from "@/hooks/use-site-settings";
+import { useSiteSettings } from "@/hooks/use-site-settings";
 
 type Category = { id: string; name: string; sort_order: number };
 type Software = { id: string; category_id: string; name: string; url: string; description: string | null; sort_order: number };
@@ -32,13 +32,6 @@ const softwaresQueryOptions = queryOptions({
 
 export const Route = createFileRoute("/")({
   component: Index,
-  loader: async ({ context }) => {
-    await Promise.all([
-      context.queryClient.ensureQueryData(siteSettingsQueryOptions),
-      context.queryClient.ensureQueryData(categoriesQueryOptions),
-      context.queryClient.ensureQueryData(softwaresQueryOptions),
-    ]);
-  },
   head: () => ({
     meta: [{ title: "极客软件馆" }],
   }),
@@ -48,8 +41,9 @@ function Index() {
   const [q, setQ] = useState("");
   const { data: settings } = useSiteSettings();
 
-  const { data: categories } = useQuery({ ...categoriesQueryOptions, initialData: [] as Category[] });
-  const { data: softwares } = useQuery({ ...softwaresQueryOptions, initialData: [] as Software[] });
+  const { data: categories = [], isLoading: loadingCats } = useQuery(categoriesQueryOptions);
+  const { data: softwares = [], isLoading: loadingSw } = useQuery(softwaresQueryOptions);
+  const isLoading = loadingCats || loadingSw;
 
   const grouped = useMemo(() => {
     const kw = q.trim().toLowerCase();
@@ -104,114 +98,69 @@ function Index() {
         </div>
       </header>
 
-      <div className="grid md:grid-cols-[200px_1fr] gap-6">
-        {/* Sidebar */}
-        <aside className="hidden md:block">
-          <div className="sticky top-20 rounded-lg border bg-card p-3">
-            <div className="text-xs font-semibold text-muted-foreground px-2 pb-2">分类导航</div>
-            <nav className="flex flex-col gap-1">
-              {categories.map((c) => {
-                const count = softwares.filter((s) => s.category_id === c.id).length;
-                return (
-                  <a
-                    key={c.id}
-                    href={`#cat-${c.id}`}
-                    className="text-sm px-2 py-1.5 rounded hover:bg-accent flex items-center justify-between transition"
-                  >
-                    <span className="truncate">{c.name}</span>
-                    <span className="text-xs text-muted-foreground">{count}</span>
-                  </a>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
-
-        {/* Mobile chips */}
-        <nav className="md:hidden mb-2 flex flex-wrap gap-2">
-          {categories.map((c) => (
-            <a
-              key={c.id}
-              href={`#cat-${c.id}`}
-              className="text-xs px-3 py-1 rounded-full border bg-card hover:bg-accent transition"
-            >
-              {c.name}
-            </a>
-          ))}
-        </nav>
-
-        <div className="space-y-10 min-w-0">
-          {grouped.map(({ category, items }) => (
-            <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-20">
-              <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
-                <span className="inline-block w-1 h-5 bg-primary rounded" />
-                {category.name}
-                <span className="text-xs font-normal text-muted-foreground">
-                  共 {items.length} 项
-                </span>
-              </h2>
-              <div className="rounded-lg border overflow-hidden bg-card">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">序号</TableHead>
-                      <TableHead>软件 / 资源名称</TableHead>
-                      <TableHead className="hidden md:table-cell">说明</TableHead>
-                      <TableHead className="w-24 text-right">操作</TableHead>
+      <div className="space-y-10">
+        {grouped.map(({ category, items }) => (
+          <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-20">
+            <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+              <span className="inline-block w-1 h-5 bg-primary rounded" />
+              {category.name}
+              <span className="text-xs font-normal text-muted-foreground">
+                共 {items.length} 项
+              </span>
+            </h2>
+            <div className="rounded-lg border overflow-hidden bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">序号</TableHead>
+                    <TableHead>软件 / 资源名称</TableHead>
+                    <TableHead className="hidden md:table-cell">说明</TableHead>
+                    <TableHead className="w-24 text-right">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {items.map((s, i) => (
+                    <TableRow key={s.id}>
+                      <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                      <TableCell>
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline font-medium break-all"
+                        >
+                          {s.name}
+                        </a>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                        {s.description || "—"}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs px-2 py-1 rounded border hover:bg-accent inline-block"
+                        >
+                          查看
+                        </a>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {items.map((s, i) => (
-                      <TableRow key={s.id}>
-                        <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                        <TableCell>
-                          <a
-                            href={s.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline font-medium break-all"
-                          >
-                            {s.name}
-                          </a>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                          {s.description || "—"}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <a
-                            href={s.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs px-2 py-1 rounded border hover:bg-accent inline-block"
-                          >
-                            查看
-                          </a>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            </section>
-          ))}
-          {grouped.length === 0 && q && (
-            <div className="text-center text-muted-foreground py-12">
-              没有找到匹配 "{q}" 的内容
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-          )}
-          {grouped.length === 0 && !q && categories.length === 0 && (
-            <div className="text-center text-muted-foreground py-12">
-              加载中...
-            </div>
-          )}
-        </div>
+          </section>
+        ))}
+        {!isLoading && grouped.length === 0 && q && (
+          <div className="text-center text-muted-foreground py-12">
+            没有找到匹配 "{q}" 的内容
+          </div>
+        )}
+        {isLoading && (
+          <div className="text-center text-muted-foreground py-12">加载中...</div>
+        )}
       </div>
-
-      {settings.footer_text ? (
-        <footer className="mt-16 pt-8 border-t text-center text-sm text-muted-foreground">
-          {settings.footer_text}
-        </footer>
-      ) : null}
     </div>
   );
 }
