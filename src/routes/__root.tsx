@@ -8,7 +8,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
-import { useSiteSettings } from "@/hooks/use-site-settings";
+import { siteSettingsQueryOptions, useSiteSettings } from "@/hooks/use-site-settings";
 
 import appCss from "../styles.css?url";
 
@@ -56,6 +56,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 }
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  loader: ({ context }) => context.queryClient.ensureQueryData(siteSettingsQueryOptions),
   head: () => ({
     meta: [
       { charSet: "utf-8" },

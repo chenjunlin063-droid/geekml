@@ -33,7 +33,6 @@ const softwaresQueryOptions = queryOptions({
 export const Route = createFileRoute("/")({
   loader: ({ context }) =>
     Promise.all([
-      context.queryClient.ensureQueryData(siteSettingsQueryOptions),
       context.queryClient.ensureQueryData(categoriesQueryOptions),
       context.queryClient.ensureQueryData(softwaresQueryOptions),
     ]),
