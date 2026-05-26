@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,11 @@ const softwaresQueryOptions = queryOptions({
 });
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(categoriesQueryOptions),
+      context.queryClient.ensureQueryData(softwaresQueryOptions),
+    ]),
   component: Index,
   head: () => ({
     meta: [{ title: "极客软件馆" }],
@@ -40,10 +45,8 @@ export const Route = createFileRoute("/")({
 function Index() {
   const [q, setQ] = useState("");
   const { data: settings } = useSiteSettings();
-
-  const { data: categories = [], isLoading: loadingCats } = useQuery(categoriesQueryOptions);
-  const { data: softwares = [], isLoading: loadingSw } = useQuery(softwaresQueryOptions);
-  const isLoading = loadingCats || loadingSw;
+  const { data: categories } = useSuspenseQuery(categoriesQueryOptions);
+  const { data: softwares } = useSuspenseQuery(softwaresQueryOptions);
 
   const grouped = useMemo(() => {
     const kw = q.trim().toLowerCase();
@@ -152,13 +155,10 @@ function Index() {
             </div>
           </section>
         ))}
-        {!isLoading && grouped.length === 0 && q && (
+        {grouped.length === 0 && q && (
           <div className="text-center text-muted-foreground py-12">
             没有找到匹配 "{q}" 的内容
           </div>
-        )}
-        {isLoading && (
-          <div className="text-center text-muted-foreground py-12">加载中...</div>
         )}
       </div>
     </div>
