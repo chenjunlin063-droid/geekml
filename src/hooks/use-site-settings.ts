@@ -1,6 +1,6 @@
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { getPublicSiteSettings } from "@/lib/site-settings.functions";
-import { DEFAULT_SETTINGS, type SiteSettings } from "@/lib/site-settings.shared";
+import type { SiteSettings } from "@/lib/site-settings.shared";
 
 export const siteSettingsQueryOptions = queryOptions({
   queryKey: ["site_settings"],
@@ -9,8 +9,5 @@ export const siteSettingsQueryOptions = queryOptions({
 });
 
 export function useSiteSettings() {
-  return useQuery({
-    ...siteSettingsQueryOptions,
-    initialData: DEFAULT_SETTINGS,
-  });
+  return useSuspenseQuery(siteSettingsQueryOptions);
 }
