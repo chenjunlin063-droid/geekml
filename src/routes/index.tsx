@@ -126,66 +126,104 @@ function Index() {
         ) : null}
       </header>
 
-      <div className="space-y-10">
-        {grouped.map(({ category, items }) => (
-          <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-20">
-            <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
-              <span className="inline-block w-1 h-5 bg-primary rounded" />
-              {category.name}
-              <span className="text-xs font-normal text-muted-foreground">
-                共 {items.length} 项
-              </span>
-            </h2>
-            <div className="rounded-lg border overflow-hidden bg-card">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-16">序号</TableHead>
-                    <TableHead>软件 / 资源名称</TableHead>
-                    <TableHead className="hidden md:table-cell">说明</TableHead>
-                    <TableHead className="w-24 text-right">操作</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {items.map((s, i) => (
-                    <TableRow key={s.id}>
-                      <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                      <TableCell>
-                        <a
-                          href={s.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline font-medium break-all"
-                        >
-                          {s.name}
-                        </a>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                        {s.description || "—"}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <a
-                          href={s.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs px-2 py-1 rounded border hover:bg-accent inline-block"
-                        >
-                          查看
-                        </a>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </section>
-        ))}
-        {grouped.length === 0 && q && (
-          <div className="text-center text-muted-foreground py-12">
-            没有找到匹配 "{q}" 的内容
-          </div>
-        )}
-      </div>
+      {settings.home_layout === "compact" ? (
+        <CompactLayout grouped={grouped} q={q} />
+      ) : (
+        <DefaultLayout grouped={grouped} q={q} />
+      )}
     </div>
   );
 }
+
+type GroupedItem = { category: Category; items: Software[] };
+
+function DefaultLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
+  return (
+    <div className="space-y-10">
+      {grouped.map(({ category, items }) => (
+        <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-20">
+          <h2 className="text-xl font-semibold mb-3 flex items-center gap-2">
+            <span className="inline-block w-1 h-5 bg-primary rounded" />
+            {category.name}
+            <span className="text-xs font-normal text-muted-foreground">共 {items.length} 项</span>
+          </h2>
+          <div className="rounded-lg border overflow-hidden bg-card">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">序号</TableHead>
+                  <TableHead>软件 / 资源名称</TableHead>
+                  <TableHead className="hidden md:table-cell">说明</TableHead>
+                  <TableHead className="w-24 text-right">操作</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((s, i) => (
+                  <TableRow key={s.id}>
+                    <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                    <TableCell>
+                      <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium break-all">
+                        {s.name}
+                      </a>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                      {s.description || "—"}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-xs px-2 py-1 rounded border hover:bg-accent inline-block">
+                        查看
+                      </a>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+      ))}
+      {grouped.length === 0 && q && (
+        <div className="text-center text-muted-foreground py-12">没有找到匹配 "{q}" 的内容</div>
+      )}
+    </div>
+  );
+}
+
+function CompactLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
+  return (
+    <div className="mt-2 space-y-5">
+      {grouped.map(({ category, items }) => (
+        <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-20">
+          <div className="rounded-lg overflow-hidden border bg-card shadow-sm">
+            <div className="bg-gradient-to-r from-sky-500 to-indigo-500 text-white px-4 py-2.5 text-sm font-semibold flex items-center justify-between">
+              <span>{category.name}</span>
+              <span className="text-xs font-normal opacity-90">共 {items.length} 项</span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 divide-x divide-y divide-border">
+              {items.map((s) => (
+                <a
+                  key={s.id}
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={s.description || s.name}
+                  className="group flex items-center gap-2 px-3 py-2.5 hover:bg-accent transition-colors min-w-0"
+                >
+                  <span className="inline-flex items-center justify-center size-7 shrink-0 rounded bg-gradient-to-br from-sky-100 to-indigo-100 text-indigo-600 text-xs font-bold">
+                    {s.name.charAt(0).toUpperCase()}
+                  </span>
+                  <span className="text-sm text-foreground group-hover:text-primary truncate">
+                    {s.name}
+                  </span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+      ))}
+      {grouped.length === 0 && q && (
+        <div className="text-center text-muted-foreground py-12">没有找到匹配 "{q}" 的内容</div>
+      )}
+    </div>
+  );
+}
+

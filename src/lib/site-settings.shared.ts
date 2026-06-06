@@ -12,6 +12,7 @@ export type SiteSettings = {
   social_official: string;
   promo_text: string;
   promo_url: string;
+  home_layout: string;
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   social_official: "",
   promo_text: "",
   promo_url: "",
+  home_layout: "default",
 };
 
 export function mergeSiteSettings(
