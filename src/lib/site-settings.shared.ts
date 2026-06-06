@@ -12,6 +12,7 @@ export type SiteSettings = {
   social_official: string;
   promo_text: string;
   promo_url: string;
+  home_layout: string;
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
