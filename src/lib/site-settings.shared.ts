@@ -10,6 +10,8 @@ export type SiteSettings = {
   social_wechat: string;
   social_bilibili: string;
   social_official: string;
+  promo_text: string;
+  promo_url: string;
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -24,6 +26,8 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   social_wechat: "",
   social_bilibili: "",
   social_official: "",
+  promo_text: "",
+  promo_url: "",
 };
 
 export function mergeSiteSettings(

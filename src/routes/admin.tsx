@@ -421,6 +421,8 @@ function SiteSettingsManager() {
     { key: "social_wechat", label: "微信（微信号或链接）", placeholder: "微信号 或 链接" },
     { key: "social_bilibili", label: "B 站主页链接", placeholder: "https://space.bilibili.com/..." },
     { key: "social_official", label: "公众号（名称或链接）", placeholder: "公众号名称 或 文章链接" },
+    { key: "promo_text", label: "首页广告文字（留空则不显示）", placeholder: "🔥 限时活动：加入会员立享专属福利" },
+    { key: "promo_url", label: "首页广告链接 URL（可选）", placeholder: "https://..." },
   ];
 
   async function uploadLogo(file: File) {
