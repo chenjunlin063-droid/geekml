@@ -484,6 +484,25 @@ function SiteSettingsManager() {
           />
         </div>
 
+        <div>
+          <Label>首页样式</Label>
+          <Select
+            value={current.home_layout || "default"}
+            onValueChange={(v) => setForm((s) => ({ ...s, home_layout: v }))}
+          >
+            <SelectTrigger className="max-w-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">默认样式（表格列表）</SelectItem>
+              <SelectItem value="compact">紧凑样式（参考灵气驿站）</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">紧凑样式以小卡片网格形式展示软件，每个分类作为一个独立表格。</p>
+        </div>
+
+
+
         {fields.map((f) => (
           <div key={f.key}>
             <Label>{f.label}</Label>
