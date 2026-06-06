@@ -100,24 +100,26 @@ function Index() {
           />
         </div>
         {settings.promo_text ? (
-          <div className="mt-6 max-w-2xl mx-auto">
+          <div className="mt-6 flex justify-center">
             {settings.promo_url ? (
               <a
                 href={settings.promo_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group relative block overflow-hidden rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 p-[2px] shadow-lg shadow-orange-500/30 transition-transform hover:scale-[1.02] hover:shadow-orange-500/50"
+                className="group inline-flex items-center gap-2 px-3 py-1.5 text-sm md:text-base font-semibold transition-transform hover:scale-[1.03]"
               >
-                <div className="rounded-[10px] bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 px-5 py-3 text-center text-sm md:text-base font-semibold text-white">
-                  <span className="mr-2 inline-block animate-pulse">📢</span>
+                <span className="animate-pulse text-orange-500 text-lg">📢</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 underline decoration-orange-400/50 decoration-2 underline-offset-4 group-hover:decoration-orange-500">
                   {settings.promo_text}
-                  <span className="ml-2 inline-block transition-transform group-hover:translate-x-1">→</span>
-                </div>
+                </span>
+                <span className="text-orange-500 transition-transform group-hover:translate-x-1">→</span>
               </a>
             ) : (
-              <div className="rounded-xl bg-gradient-to-r from-amber-400 via-orange-500 to-pink-500 px-5 py-3 text-center text-sm md:text-base font-semibold text-white shadow-lg shadow-orange-500/30">
-                <span className="mr-2 inline-block animate-pulse">📢</span>
-                {settings.promo_text}
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 text-sm md:text-base font-semibold">
+                <span className="animate-pulse text-orange-500 text-lg">📢</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500">
+                  {settings.promo_text}
+                </span>
               </div>
             )}
           </div>
