@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   social_official: "",
   promo_text: "",
   promo_url: "",
+  home_layout: "default",
 };
 
 export function mergeSiteSettings(
