@@ -130,7 +130,7 @@ function Index() {
       {settings.home_layout === "compact" ? (
         <CompactLayout grouped={grouped} q={q} />
       ) : settings.home_layout === "card" ? (
-        <CardLayout grouped={grouped} q={q} />
+        <CardLayout grouped={grouped} q={q} mobileTwoCols={settings.card_mobile_columns === "2"} />
       ) : (
         <DefaultLayout grouped={grouped} q={q} />
       )}
@@ -235,7 +235,7 @@ function CompactLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
   );
 }
 
-function CardLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
+function CardLayout({ grouped, q, mobileTwoCols }: { grouped: GroupedItem[]; q: string; mobileTwoCols: boolean }) {
   const palette = [
     "bg-sky-50 text-sky-600",
     "bg-rose-50 text-rose-600",
@@ -246,6 +246,7 @@ function CardLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
     "bg-teal-50 text-teal-600",
     "bg-pink-50 text-pink-600",
   ];
+  const gridCls = mobileTwoCols ? "grid grid-cols-2" : "grid grid-cols-1 md:grid-cols-2";
   return (
     <div className="mt-2 space-y-6">
       {grouped.map(({ category, items }) => (
@@ -256,7 +257,7 @@ function CardLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
                 {category.name}
               </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2">
+            <div className={gridCls}>
               {items.map((s, i) => {
                 const col = i % 2;
                 const row = Math.floor(i / 2);
