@@ -262,12 +262,25 @@ function SoftwareDialog({
   const [desc, setDesc] = useState(initial?.description ?? "");
   const [catId, setCatId] = useState(initial?.category_id ?? categories[0]?.id ?? "");
   const [sort, setSort] = useState(initial?.sort_order ?? 0);
+  const [iconUrl, setIconUrl] = useState(initial?.icon_url ?? "");
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  async function uploadIcon(file: File) {
+    setUploading(true);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `icon-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
+    if (error) { setUploading(false); return toast.error(error.message); }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setIconUrl(data.publicUrl);
+    setUploading(false);
+  }
 
   async function save() {
     if (!name || !url || !catId) return toast.error("请填写完整信息");
     setBusy(true);
-    const payload = { name, url, description: desc, category_id: catId, sort_order: Number(sort) || 0 };
+    const payload = { name, url, description: desc, category_id: catId, sort_order: Number(sort) || 0, icon_url: iconUrl || null };
     const { error } = initial
       ? await supabase.from("softwares").update(payload).eq("id", initial.id)
       : await supabase.from("softwares").insert(payload);
@@ -283,6 +296,32 @@ function SoftwareDialog({
         <DialogTitle>{initial ? "编辑软件" : "新增软件"}</DialogTitle>
       </DialogHeader>
       <div className="space-y-3">
+        <div>
+          <Label>图标</Label>
+          <div className="flex items-center gap-3 mt-1">
+            {iconUrl ? (
+              <img src={iconUrl} alt="" className="size-10 rounded border bg-card object-contain p-0.5" />
+            ) : (
+              <div className="size-10 rounded border bg-muted/40 grid place-items-center text-xs text-muted-foreground">无</div>
+            )}
+            <Input
+              type="file"
+              accept="image/*"
+              className="max-w-xs"
+              disabled={uploading}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadIcon(f); }}
+            />
+            {iconUrl && (
+              <Button variant="ghost" size="sm" onClick={() => setIconUrl("")}>移除</Button>
+            )}
+          </div>
+          <Input
+            className="mt-2"
+            placeholder="或直接粘贴图标 URL"
+            value={iconUrl}
+            onChange={(e) => setIconUrl(e.target.value)}
+          />
+        </div>
         <div>
           <Label>名称</Label>
           <Input value={name} onChange={(e) => setName(e.target.value)} />
@@ -319,6 +358,7 @@ function SoftwareDialog({
     </DialogContent>
   );
 }
+
 
 /* ------------------- Category manager ------------------- */
 function CategoryManager({ categories, onChange }: { categories: Category[]; onChange: () => void }) {
