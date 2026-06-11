@@ -129,9 +129,12 @@ function Index() {
 
       {settings.home_layout === "compact" ? (
         <CompactLayout grouped={grouped} q={q} />
+      ) : settings.home_layout === "card" ? (
+        <CardLayout grouped={grouped} q={q} />
       ) : (
         <DefaultLayout grouped={grouped} q={q} />
       )}
+
     </div>
   );
 }
