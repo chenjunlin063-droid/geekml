@@ -177,43 +177,73 @@ function SoftwareManager({
         </Dialog>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>名称</TableHead>
-                <TableHead>分类</TableHead>
-                <TableHead className="hidden md:table-cell">链接</TableHead>
-                <TableHead className="w-24">排序</TableHead>
-                <TableHead className="w-28 text-right">操作</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {softwares.map((s) => {
-                const cat = categories.find((c) => c.id === s.category_id);
-                return (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.name}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{cat?.name ?? "—"}</TableCell>
-                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground max-w-xs truncate">
-                      {s.url}
-                    </TableCell>
-                    <TableCell>{s.sort_order}</TableCell>
-                    <TableCell className="text-right">
-                      <Button size="icon" variant="ghost" onClick={() => startEdit(s)}>
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button size="icon" variant="ghost" onClick={() => remove(s.id)}>
-                        <Trash2 className="size-4 text-destructive" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+        <div className="space-y-6">
+          {categories.map((cat) => {
+            const items = softwares.filter((s) => s.category_id === cat.id);
+            return (
+              <div key={cat.id}>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-block w-1 h-4 bg-primary rounded" />
+                  <h3 className="font-semibold">{cat.name}</h3>
+                  <span className="text-xs text-muted-foreground">({items.length})</span>
+                </div>
+                <div className="rounded-md border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-14">图标</TableHead>
+                        <TableHead>名称</TableHead>
+                        <TableHead className="hidden md:table-cell">链接</TableHead>
+                        <TableHead className="w-20">排序</TableHead>
+                        <TableHead className="w-28 text-right">操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {items.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-muted-foreground text-sm">
+                            暂无软件
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      {items.map((s) => (
+                        <TableRow key={s.id}>
+                          <TableCell>
+                            {s.icon_url ? (
+                              <img src={s.icon_url} alt="" className="size-7 rounded object-contain border bg-card" />
+                            ) : (
+                              <div className="size-7 rounded border bg-muted/50 grid place-items-center text-[10px] text-muted-foreground">
+                                {s.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </TableCell>
+                          <TableCell className="font-medium">{s.name}</TableCell>
+                          <TableCell className="hidden md:table-cell text-xs text-muted-foreground max-w-xs truncate">
+                            {s.url}
+                          </TableCell>
+                          <TableCell>{s.sort_order}</TableCell>
+                          <TableCell className="text-right">
+                            <Button size="icon" variant="ghost" onClick={() => startEdit(s)}>
+                              <Pencil className="size-4" />
+                            </Button>
+                            <Button size="icon" variant="ghost" onClick={() => remove(s.id)}>
+                              <Trash2 className="size-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            );
+          })}
+          {categories.length === 0 && (
+            <div className="text-center text-muted-foreground text-sm py-8">请先在"分类"标签页新增分类</div>
+          )}
         </div>
       </CardContent>
+
     </Card>
   );
 }
