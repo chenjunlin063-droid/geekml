@@ -646,6 +646,23 @@ function SiteSettingsManager() {
           <p className="text-xs text-muted-foreground mt-1">紧凑样式以小卡片网格形式展示软件，每个分类作为一个独立表格。</p>
         </div>
 
+        <div>
+          <Label>移动端卡片样式列数</Label>
+          <Select
+            value={current.card_mobile_columns || "1"}
+            onValueChange={(v) => setForm((s) => ({ ...s, card_mobile_columns: v }))}
+          >
+            <SelectTrigger className="max-w-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">单列（默认）</SelectItem>
+              <SelectItem value="2">双列（与电脑端一致）</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">仅在"卡片样式"下生效，控制手机上每行展示几个软件。</p>
+        </div>
+
 
 
         {fields.map((f) => (
