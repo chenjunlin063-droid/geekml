@@ -1,0 +1,1 @@
+ALTER TABLE public.softwares ADD COLUMN IF NOT EXISTS icon_url text;

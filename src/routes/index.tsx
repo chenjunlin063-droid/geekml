@@ -8,7 +8,8 @@ import { Search } from "lucide-react";
 import { useSiteSettings } from "@/hooks/use-site-settings";
 
 type Category = { id: string; name: string; sort_order: number };
-type Software = { id: string; category_id: string; name: string; url: string; description: string | null; sort_order: number };
+type Software = { id: string; category_id: string; name: string; url: string; description: string | null; sort_order: number; icon_url: string | null };
+
 
 const categoriesQueryOptions = queryOptions({
   queryKey: ["categories"],
@@ -128,9 +129,12 @@ function Index() {
 
       {settings.home_layout === "compact" ? (
         <CompactLayout grouped={grouped} q={q} />
+      ) : settings.home_layout === "card" ? (
+        <CardLayout grouped={grouped} q={q} />
       ) : (
         <DefaultLayout grouped={grouped} q={q} />
       )}
+
     </div>
   );
 }
@@ -208,9 +212,13 @@ function CompactLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
                   title={s.description || s.name}
                   className="group flex items-center gap-2 px-3 py-2.5 hover:bg-accent transition-colors min-w-0"
                 >
-                  <span className="inline-flex items-center justify-center size-7 shrink-0 rounded bg-gradient-to-br from-sky-100 to-indigo-100 text-indigo-600 text-xs font-bold">
-                    {s.name.charAt(0).toUpperCase()}
-                  </span>
+                  {s.icon_url ? (
+                    <img src={s.icon_url} alt="" className="size-7 shrink-0 rounded object-contain bg-muted" />
+                  ) : (
+                    <span className="inline-flex items-center justify-center size-7 shrink-0 rounded bg-gradient-to-br from-sky-100 to-indigo-100 text-indigo-600 text-xs font-bold">
+                      {s.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                   <span className="text-sm text-foreground group-hover:text-primary truncate">
                     {s.name}
                   </span>
@@ -226,4 +234,75 @@ function CompactLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
     </div>
   );
 }
+
+function CardLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
+  const palette = [
+    "bg-sky-50 text-sky-600",
+    "bg-rose-50 text-rose-600",
+    "bg-amber-50 text-amber-600",
+    "bg-emerald-50 text-emerald-600",
+    "bg-violet-50 text-violet-600",
+    "bg-orange-50 text-orange-600",
+    "bg-teal-50 text-teal-600",
+    "bg-pink-50 text-pink-600",
+  ];
+  return (
+    <div className="mt-2 space-y-6">
+      {grouped.map(({ category, items }) => (
+        <section key={category.id} id={`cat-${category.id}`} className="scroll-mt-20">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="px-5 py-3 border-b border-border bg-muted/30">
+              <h2 className="text-base font-bold text-red-600 tracking-wide">
+                {category.name}
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2">
+              {items.map((s, i) => {
+                const col = i % 2;
+                const row = Math.floor(i / 2);
+                const totalRows = Math.ceil(items.length / 2);
+                const isLastRow = row === totalRows - 1;
+                return (
+                  <a
+                    key={s.id}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={s.description || s.name}
+                    className={[
+                      "group flex items-center gap-3 px-5 py-3 transition-colors hover:bg-accent/50 min-w-0",
+                      isLastRow ? "" : "border-b border-border",
+                      col === 0 ? "md:border-r md:border-border" : "",
+                    ].join(" ")}
+                  >
+                    {s.icon_url ? (
+                      <img
+                        src={s.icon_url}
+                        alt=""
+                        className="size-7 shrink-0 rounded object-contain"
+                      />
+                    ) : (
+                      <span
+                        className={`inline-flex items-center justify-center size-7 shrink-0 rounded text-sm font-bold ${palette[i % palette.length]}`}
+                      >
+                        {s.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                    <span className="text-sm text-sky-600 group-hover:text-sky-700 group-hover:underline truncate">
+                      {s.name}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+      ))}
+      {grouped.length === 0 && q && (
+        <div className="text-center text-muted-foreground py-12">没有找到匹配 "{q}" 的内容</div>
+      )}
+    </div>
+  );
+}
+
 
