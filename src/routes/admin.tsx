@@ -20,7 +20,8 @@ export const Route = createFileRoute("/admin")({
 });
 
 type Category = { id: string; name: string; sort_order: number };
-type Software = { id: string; category_id: string; name: string; url: string; description: string | null; sort_order: number };
+type Software = { id: string; category_id: string; name: string; url: string; description: string | null; sort_order: number; icon_url: string | null };
+
 
 function Admin() {
   const { user, isAdmin, loading } = useAuth();
