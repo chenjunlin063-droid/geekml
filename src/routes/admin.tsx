@@ -137,13 +137,16 @@ function SoftwareManager({
 }) {
   const [editing, setEditing] = useState<Software | null>(null);
   const [open, setOpen] = useState(false);
+  const [presetCatId, setPresetCatId] = useState<string | null>(null);
 
-  const startCreate = () => {
+  const startCreate = (catId?: string) => {
     setEditing(null);
+    setPresetCatId(catId ?? null);
     setOpen(true);
   };
   const startEdit = (s: Software) => {
     setEditing(s);
+    setPresetCatId(null);
     setOpen(true);
   };
 
@@ -161,14 +164,15 @@ function SoftwareManager({
         <CardTitle>软件列表</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" onClick={startCreate}>
+            <Button size="sm" onClick={() => startCreate()}>
               <Plus className="size-4 mr-1" /> 新增软件
             </Button>
           </DialogTrigger>
           <SoftwareDialog
-            key={editing?.id ?? "new"}
+            key={editing?.id ?? presetCatId ?? "new"}
             categories={categories}
             initial={editing}
+            presetCategoryId={presetCatId}
             onSaved={() => {
               setOpen(false);
               onChange();
@@ -182,10 +186,15 @@ function SoftwareManager({
             const items = softwares.filter((s) => s.category_id === cat.id);
             return (
               <div key={cat.id}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-block w-1 h-4 bg-primary rounded" />
-                  <h3 className="font-semibold">{cat.name}</h3>
-                  <span className="text-xs text-muted-foreground">({items.length})</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-1 h-4 bg-primary rounded" />
+                    <h3 className="font-semibold">{cat.name}</h3>
+                    <span className="text-xs text-muted-foreground">({items.length})</span>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => startCreate(cat.id)}>
+                    <Plus className="size-4 mr-1" /> 添加到此分类
+                  </Button>
                 </div>
                 <div className="rounded-md border overflow-hidden">
                   <Table>
@@ -251,16 +260,18 @@ function SoftwareManager({
 function SoftwareDialog({
   categories,
   initial,
+  presetCategoryId,
   onSaved,
 }: {
   categories: Category[];
   initial: Software | null;
+  presetCategoryId?: string | null;
   onSaved: () => void;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [url, setUrl] = useState(initial?.url ?? "");
   const [desc, setDesc] = useState(initial?.description ?? "");
-  const [catId, setCatId] = useState(initial?.category_id ?? categories[0]?.id ?? "");
+  const [catId, setCatId] = useState(initial?.category_id ?? presetCategoryId ?? categories[0]?.id ?? "");
   const [sort, setSort] = useState(initial?.sort_order ?? 0);
   const [iconUrl, setIconUrl] = useState(initial?.icon_url ?? "");
   const [busy, setBusy] = useState(false);
