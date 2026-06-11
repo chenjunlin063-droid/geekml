@@ -567,6 +567,7 @@ function SiteSettingsManager() {
             <SelectContent>
               <SelectItem value="default">默认样式（表格列表）</SelectItem>
               <SelectItem value="compact">紧凑样式（参考灵气驿站）</SelectItem>
+              <SelectItem value="card">卡片样式（双列表格，参考极客）</SelectItem>
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground mt-1">紧凑样式以小卡片网格形式展示软件，每个分类作为一个独立表格。</p>
