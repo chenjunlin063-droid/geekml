@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, LogOut } from "lucide-react";
+import { Pencil, Trash2, Plus, LogOut, GripVertical } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
@@ -399,6 +399,29 @@ function CategoryManager({ categories, onChange }: { categories: Category[]; onC
     onChange();
   }
 
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+
+  async function handleDrop(targetId: string) {
+    if (!dragId || dragId === targetId) { setDragId(null); setOverId(null); return; }
+    const sorted = [...categories].sort((a, b) => a.sort_order - b.sort_order);
+    const fromIdx = sorted.findIndex((c) => c.id === dragId);
+    const toIdx = sorted.findIndex((c) => c.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = sorted.splice(fromIdx, 1);
+    sorted.splice(toIdx, 0, moved);
+    setDragId(null); setOverId(null);
+    // persist new sort_orders
+    const updates = sorted.map((c, i) =>
+      supabase.from("categories").update({ sort_order: i }).eq("id", c.id),
+    );
+    const results = await Promise.all(updates);
+    const err = results.find((r) => r.error)?.error;
+    if (err) return toast.error(err.message);
+    toast.success("排序已更新");
+    onChange();
+  }
+
   return (
     <Card>
       <CardHeader><CardTitle>分类管理</CardTitle></CardHeader>
@@ -414,18 +437,30 @@ function CategoryManager({ categories, onChange }: { categories: Category[]; onC
           </div>
           <Button onClick={add}><Plus className="size-4 mr-1" /> 新增</Button>
         </div>
+        <p className="text-xs text-muted-foreground mb-2">提示：拖动左侧 <GripVertical className="inline size-3" /> 手柄可调整分类顺序。</p>
         <div className="rounded-md border overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10"></TableHead>
                 <TableHead>名称</TableHead>
                 <TableHead className="w-32">排序</TableHead>
                 <TableHead className="w-24 text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((c) => (
-                <CategoryRow key={c.id} c={c} onUpdate={update} onDelete={remove} />
+              {[...categories].sort((a,b)=>a.sort_order-b.sort_order).map((c) => (
+                <CategoryRow
+                  key={c.id}
+                  c={c}
+                  onUpdate={update}
+                  onDelete={remove}
+                  isOver={overId === c.id}
+                  onDragStart={() => setDragId(c.id)}
+                  onDragOver={(e) => { e.preventDefault(); if (overId !== c.id) setOverId(c.id); }}
+                  onDragLeave={() => overId === c.id && setOverId(null)}
+                  onDrop={() => handleDrop(c.id)}
+                />
               ))}
             </TableBody>
           </Table>
@@ -439,15 +474,41 @@ function CategoryRow({
   c,
   onUpdate,
   onDelete,
+  isOver,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
 }: {
   c: Category;
   onUpdate: (c: Category, patch: Partial<Category>) => void;
   onDelete: (id: string) => void;
+  isOver: boolean;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: () => void;
 }) {
   const [name, setName] = useState(c.name);
   const [sort, setSort] = useState(c.sort_order);
   return (
-    <TableRow>
+    <TableRow
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      className={isOver ? "bg-accent/60" : ""}
+    >
+      <TableCell>
+        <button
+          type="button"
+          draggable
+          onDragStart={onDragStart}
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+          aria-label="拖动排序"
+        >
+          <GripVertical className="size-4" />
+        </button>
+      </TableCell>
       <TableCell>
         <Input
           value={name}
