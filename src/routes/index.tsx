@@ -212,9 +212,13 @@ function CompactLayout({ grouped, q }: { grouped: GroupedItem[]; q: string }) {
                   title={s.description || s.name}
                   className="group flex items-center gap-2 px-3 py-2.5 hover:bg-accent transition-colors min-w-0"
                 >
-                  <span className="inline-flex items-center justify-center size-7 shrink-0 rounded bg-gradient-to-br from-sky-100 to-indigo-100 text-indigo-600 text-xs font-bold">
-                    {s.name.charAt(0).toUpperCase()}
-                  </span>
+                  {s.icon_url ? (
+                    <img src={s.icon_url} alt="" className="size-7 shrink-0 rounded object-contain bg-muted" />
+                  ) : (
+                    <span className="inline-flex items-center justify-center size-7 shrink-0 rounded bg-gradient-to-br from-sky-100 to-indigo-100 text-indigo-600 text-xs font-bold">
+                      {s.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
                   <span className="text-sm text-foreground group-hover:text-primary truncate">
                     {s.name}
                   </span>
