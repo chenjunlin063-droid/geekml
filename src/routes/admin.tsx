@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import type React from "react";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Pencil, Trash2, Plus, LogOut } from "lucide-react";
+import { Pencil, Trash2, Plus, LogOut, GripVertical } from "lucide-react";
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
@@ -137,13 +138,16 @@ function SoftwareManager({
 }) {
   const [editing, setEditing] = useState<Software | null>(null);
   const [open, setOpen] = useState(false);
+  const [presetCatId, setPresetCatId] = useState<string | null>(null);
 
-  const startCreate = () => {
+  const startCreate = (catId?: string) => {
     setEditing(null);
+    setPresetCatId(catId ?? null);
     setOpen(true);
   };
   const startEdit = (s: Software) => {
     setEditing(s);
+    setPresetCatId(null);
     setOpen(true);
   };
 
@@ -161,14 +165,15 @@ function SoftwareManager({
         <CardTitle>软件列表</CardTitle>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" onClick={startCreate}>
+            <Button size="sm" onClick={() => startCreate()}>
               <Plus className="size-4 mr-1" /> 新增软件
             </Button>
           </DialogTrigger>
           <SoftwareDialog
-            key={editing?.id ?? "new"}
+            key={editing?.id ?? presetCatId ?? "new"}
             categories={categories}
             initial={editing}
+            presetCategoryId={presetCatId}
             onSaved={() => {
               setOpen(false);
               onChange();
@@ -182,10 +187,15 @@ function SoftwareManager({
             const items = softwares.filter((s) => s.category_id === cat.id);
             return (
               <div key={cat.id}>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="inline-block w-1 h-4 bg-primary rounded" />
-                  <h3 className="font-semibold">{cat.name}</h3>
-                  <span className="text-xs text-muted-foreground">({items.length})</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-block w-1 h-4 bg-primary rounded" />
+                    <h3 className="font-semibold">{cat.name}</h3>
+                    <span className="text-xs text-muted-foreground">({items.length})</span>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={() => startCreate(cat.id)}>
+                    <Plus className="size-4 mr-1" /> 添加到此分类
+                  </Button>
                 </div>
                 <div className="rounded-md border overflow-hidden">
                   <Table>
@@ -251,16 +261,18 @@ function SoftwareManager({
 function SoftwareDialog({
   categories,
   initial,
+  presetCategoryId,
   onSaved,
 }: {
   categories: Category[];
   initial: Software | null;
+  presetCategoryId?: string | null;
   onSaved: () => void;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
   const [url, setUrl] = useState(initial?.url ?? "");
   const [desc, setDesc] = useState(initial?.description ?? "");
-  const [catId, setCatId] = useState(initial?.category_id ?? categories[0]?.id ?? "");
+  const [catId, setCatId] = useState(initial?.category_id ?? presetCategoryId ?? categories[0]?.id ?? "");
   const [sort, setSort] = useState(initial?.sort_order ?? 0);
   const [iconUrl, setIconUrl] = useState(initial?.icon_url ?? "");
   const [busy, setBusy] = useState(false);
@@ -388,6 +400,29 @@ function CategoryManager({ categories, onChange }: { categories: Category[]; onC
     onChange();
   }
 
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+
+  async function handleDrop(targetId: string) {
+    if (!dragId || dragId === targetId) { setDragId(null); setOverId(null); return; }
+    const sorted = [...categories].sort((a, b) => a.sort_order - b.sort_order);
+    const fromIdx = sorted.findIndex((c) => c.id === dragId);
+    const toIdx = sorted.findIndex((c) => c.id === targetId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = sorted.splice(fromIdx, 1);
+    sorted.splice(toIdx, 0, moved);
+    setDragId(null); setOverId(null);
+    // persist new sort_orders
+    const updates = sorted.map((c, i) =>
+      supabase.from("categories").update({ sort_order: i }).eq("id", c.id),
+    );
+    const results = await Promise.all(updates);
+    const err = results.find((r) => r.error)?.error;
+    if (err) return toast.error(err.message);
+    toast.success("排序已更新");
+    onChange();
+  }
+
   return (
     <Card>
       <CardHeader><CardTitle>分类管理</CardTitle></CardHeader>
@@ -403,18 +438,30 @@ function CategoryManager({ categories, onChange }: { categories: Category[]; onC
           </div>
           <Button onClick={add}><Plus className="size-4 mr-1" /> 新增</Button>
         </div>
+        <p className="text-xs text-muted-foreground mb-2">提示：拖动左侧 <GripVertical className="inline size-3" /> 手柄可调整分类顺序。</p>
         <div className="rounded-md border overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10"></TableHead>
                 <TableHead>名称</TableHead>
                 <TableHead className="w-32">排序</TableHead>
                 <TableHead className="w-24 text-right">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {categories.map((c) => (
-                <CategoryRow key={c.id} c={c} onUpdate={update} onDelete={remove} />
+              {[...categories].sort((a,b)=>a.sort_order-b.sort_order).map((c) => (
+                <CategoryRow
+                  key={c.id}
+                  c={c}
+                  onUpdate={update}
+                  onDelete={remove}
+                  isOver={overId === c.id}
+                  onDragStart={() => setDragId(c.id)}
+                  onDragOver={(e) => { e.preventDefault(); if (overId !== c.id) setOverId(c.id); }}
+                  onDragLeave={() => overId === c.id && setOverId(null)}
+                  onDrop={() => handleDrop(c.id)}
+                />
               ))}
             </TableBody>
           </Table>
@@ -428,15 +475,41 @@ function CategoryRow({
   c,
   onUpdate,
   onDelete,
+  isOver,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
 }: {
   c: Category;
   onUpdate: (c: Category, patch: Partial<Category>) => void;
   onDelete: (id: string) => void;
+  isOver: boolean;
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDragLeave: () => void;
+  onDrop: () => void;
 }) {
   const [name, setName] = useState(c.name);
   const [sort, setSort] = useState(c.sort_order);
   return (
-    <TableRow>
+    <TableRow
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      className={isOver ? "bg-accent/60" : ""}
+    >
+      <TableCell>
+        <button
+          type="button"
+          draggable
+          onDragStart={onDragStart}
+          className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+          aria-label="拖动排序"
+        >
+          <GripVertical className="size-4" />
+        </button>
+      </TableCell>
       <TableCell>
         <Input
           value={name}
@@ -571,6 +644,23 @@ function SiteSettingsManager() {
             </SelectContent>
           </Select>
           <p className="text-xs text-muted-foreground mt-1">紧凑样式以小卡片网格形式展示软件，每个分类作为一个独立表格。</p>
+        </div>
+
+        <div>
+          <Label>移动端卡片样式列数</Label>
+          <Select
+            value={current.card_mobile_columns || "1"}
+            onValueChange={(v) => setForm((s) => ({ ...s, card_mobile_columns: v }))}
+          >
+            <SelectTrigger className="max-w-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">单列（默认）</SelectItem>
+              <SelectItem value="2">双列（与电脑端一致）</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground mt-1">仅在"卡片样式"下生效，控制手机上每行展示几个软件。</p>
         </div>
 
 

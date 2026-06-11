@@ -13,6 +13,7 @@ export type SiteSettings = {
   promo_text: string;
   promo_url: string;
   home_layout: string;
+  card_mobile_columns: string;
 };
 
 export const DEFAULT_SETTINGS: SiteSettings = {
@@ -30,6 +31,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   promo_text: "",
   promo_url: "",
   home_layout: "default",
+  card_mobile_columns: "1",
 };
 
 export function mergeSiteSettings(
