@@ -142,9 +142,17 @@ function Index() {
         <DefaultLayout grouped={grouped} q={q} />
       )}
 
+      {settings.disclaimer_text ? (
+        <div className="mt-10 pt-6 border-t border-dashed text-xs text-muted-foreground leading-relaxed whitespace-pre-line max-w-4xl mx-auto text-center">
+          <div className="mb-1 font-medium text-foreground/80">免责声明</div>
+          {settings.disclaimer_text}
+        </div>
+      ) : null}
+
     </div>
   );
 }
+
 
 type GroupedItem = { category: Category; items: Software[] };
 
