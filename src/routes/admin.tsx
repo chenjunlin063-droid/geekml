@@ -13,8 +13,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Pencil, Trash2, Plus, LogOut, GripVertical } from "lucide-react";
+
 
 export const Route = createFileRoute("/admin")({
   component: Admin,
@@ -558,16 +560,15 @@ function SiteSettingsManager() {
     { key: "site_name", label: "网站名称", placeholder: "极客软件馆" },
     { key: "hero_title", label: "首页大标题" },
     { key: "hero_subtitle", label: "首页副标题（可用 {count} 表示软件总数）" },
+    { key: "hero_extra_html", label: "副标题下方补充内容（支持 HTML，可写 <a href='...'>链接</a>）", textarea: true, placeholder: "例如：本站收录 <a href='https://...'>优质资源</a>，欢迎 <a href='https://...'>提交建议</a>" },
     { key: "search_placeholder", label: "搜索框占位文字" },
     { key: "footer_text", label: "页脚文字" },
     { key: "meta_description", label: "SEO 描述" },
-    { key: "social_qq", label: "QQ（群链接或号码）", placeholder: "https://qm.qq.com/... 或 群号" },
-    { key: "social_wechat", label: "微信（微信号或链接）", placeholder: "微信号 或 链接" },
-    { key: "social_bilibili", label: "B 站主页链接", placeholder: "https://space.bilibili.com/..." },
-    { key: "social_official", label: "公众号（名称或链接）", placeholder: "公众号名称 或 文章链接" },
+    { key: "disclaimer_text", label: "免责声明（显示在所有分类下方、社交媒体上方）", textarea: true, placeholder: "本站所有资源均来自网络，仅供学习交流使用..." },
     { key: "promo_text", label: "首页广告文字（留空则不显示）", placeholder: "🔥 限时活动：加入会员立享专属福利" },
     { key: "promo_url", label: "首页广告链接 URL（可选）", placeholder: "https://..." },
   ];
+
 
   async function uploadLogo(file: File) {
     setUploading(true);
@@ -665,19 +666,175 @@ function SiteSettingsManager() {
 
 
 
+        <div className="rounded border p-3 bg-muted/20">
+          <Label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={current.hide_header_logo === "1"}
+              onChange={(e) => setForm((s) => ({ ...s, hide_header_logo: e.target.checked ? "1" : "0" }))}
+            />
+            隐藏顶部导航栏的 Logo（避免与首页大 Logo 重复）
+          </Label>
+        </div>
+
         {fields.map((f) => (
           <div key={f.key}>
             <Label>{f.label}</Label>
-            <Input
-              value={current[f.key] ?? ""}
-              placeholder={f.placeholder}
-              onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
-            />
+            {f.textarea ? (
+              <Textarea
+                value={current[f.key] ?? ""}
+                placeholder={f.placeholder}
+                rows={4}
+                onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
+              />
+            ) : (
+              <Input
+                value={current[f.key] ?? ""}
+                placeholder={f.placeholder}
+                onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
+              />
+            )}
           </div>
         ))}
+
+        <div className="space-y-3 pt-2 border-t">
+          <h3 className="text-sm font-semibold pt-3">社交媒体设置</h3>
+          <p className="text-xs text-muted-foreground">
+            每个平台可选 "链接" 模式（点击跳转）或 "二维码" 模式（点击弹窗），可自定义图标、二维码、说明文字。
+          </p>
+          {[
+            { key: "qq", label: "QQ" },
+            { key: "wechat", label: "微信" },
+            { key: "bilibili", label: "哔哩哔哩" },
+            { key: "official", label: "公众号" },
+          ].map((p) => (
+            <SocialEditor
+              key={p.key}
+              platformKey={p.key}
+              platformLabel={p.label}
+              current={current}
+              setForm={setForm}
+            />
+          ))}
+        </div>
 
         <Button disabled={busy} onClick={save}>{busy ? "保存中..." : "保存设置"}</Button>
       </CardContent>
     </Card>
+  );
+}
+
+/* ------------------- Social platform editor ------------------- */
+function SocialEditor({
+  platformKey,
+  platformLabel,
+  current,
+  setForm,
+}: {
+  platformKey: string;
+  platformLabel: string;
+  current: Record<string, string>;
+  setForm: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+}) {
+  const valueKey = `social_${platformKey}`;
+  const modeKey = `social_${platformKey}_mode`;
+  const qrKey = `social_${platformKey}_qr`;
+  const descKey = `social_${platformKey}_desc`;
+  const iconKey = `social_${platformKey}_icon`;
+  const [uploading, setUploading] = useState<"qr" | "icon" | null>(null);
+
+  async function uploadFile(file: File, kind: "qr" | "icon") {
+    setUploading(kind);
+    const ext = file.name.split(".").pop() || "png";
+    const path = `social-${platformKey}-${kind}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
+    if (error) { setUploading(null); return toast.error(error.message); }
+    const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
+    setForm((f) => ({ ...f, [kind === "qr" ? qrKey : iconKey]: data.publicUrl }));
+    setUploading(null);
+  }
+
+  const mode = current[modeKey] || "link";
+
+  return (
+    <div className="rounded-md border p-3 space-y-2 bg-card/40">
+      <div className="flex items-center gap-3">
+        <div className="font-medium text-sm w-20">{platformLabel}</div>
+        <Select
+          value={mode}
+          onValueChange={(v) => setForm((s) => ({ ...s, [modeKey]: v }))}
+        >
+          <SelectTrigger className="w-32 h-8 text-xs"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="link">链接跳转</SelectItem>
+            <SelectItem value="qr">弹出二维码</SelectItem>
+          </SelectContent>
+        </Select>
+        <span className="text-xs text-muted-foreground">
+          {mode === "link" ? "点击图标直接打开链接" : "点击图标弹出二维码弹窗"}
+        </span>
+      </div>
+
+      <div>
+        <Label className="text-xs">链接 / 账号文字（弹窗中也会显示）</Label>
+        <Input
+          value={current[valueKey] ?? ""}
+          placeholder={mode === "link" ? "https://..." : "微信号 或 群号"}
+          onChange={(e) => setForm((s) => ({ ...s, [valueKey]: e.target.value }))}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs">自定义图标（可选）</Label>
+          <div className="flex items-center gap-2 mt-1">
+            {current[iconKey] ? (
+              <img src={current[iconKey]} alt="" className="size-8 rounded border bg-card object-contain p-0.5" />
+            ) : (
+              <div className="size-8 rounded border bg-muted/40 grid place-items-center text-[10px] text-muted-foreground">默认</div>
+            )}
+            <Input
+              type="file"
+              accept="image/*"
+              disabled={uploading === "icon"}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f, "icon"); }}
+            />
+            {current[iconKey] && (
+              <Button variant="ghost" size="sm" onClick={() => setForm((s) => ({ ...s, [iconKey]: "" }))}>移除</Button>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <Label className="text-xs">二维码图片（二维码模式必填）</Label>
+          <div className="flex items-center gap-2 mt-1">
+            {current[qrKey] ? (
+              <img src={current[qrKey]} alt="" className="size-8 rounded border bg-card object-contain" />
+            ) : (
+              <div className="size-8 rounded border bg-muted/40 grid place-items-center text-[10px] text-muted-foreground">无</div>
+            )}
+            <Input
+              type="file"
+              accept="image/*"
+              disabled={uploading === "qr"}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadFile(f, "qr"); }}
+            />
+            {current[qrKey] && (
+              <Button variant="ghost" size="sm" onClick={() => setForm((s) => ({ ...s, [qrKey]: "" }))}>移除</Button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <Label className="text-xs">弹窗说明文字（可选）</Label>
+        <Textarea
+          rows={2}
+          value={current[descKey] ?? ""}
+          placeholder="例如：扫码加入交流群 / 关注后回复'软件'获取资源"
+          onChange={(e) => setForm((s) => ({ ...s, [descKey]: e.target.value }))}
+        />
+      </div>
+    </div>
   );
 }
