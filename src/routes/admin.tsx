@@ -560,16 +560,15 @@ function SiteSettingsManager() {
     { key: "site_name", label: "网站名称", placeholder: "极客软件馆" },
     { key: "hero_title", label: "首页大标题" },
     { key: "hero_subtitle", label: "首页副标题（可用 {count} 表示软件总数）" },
+    { key: "hero_extra_html", label: "副标题下方补充内容（支持 HTML，可写 <a href='...'>链接</a>）", textarea: true, placeholder: "例如：本站收录 <a href='https://...'>优质资源</a>，欢迎 <a href='https://...'>提交建议</a>" },
     { key: "search_placeholder", label: "搜索框占位文字" },
     { key: "footer_text", label: "页脚文字" },
     { key: "meta_description", label: "SEO 描述" },
-    { key: "social_qq", label: "QQ（群链接或号码）", placeholder: "https://qm.qq.com/... 或 群号" },
-    { key: "social_wechat", label: "微信（微信号或链接）", placeholder: "微信号 或 链接" },
-    { key: "social_bilibili", label: "B 站主页链接", placeholder: "https://space.bilibili.com/..." },
-    { key: "social_official", label: "公众号（名称或链接）", placeholder: "公众号名称 或 文章链接" },
+    { key: "disclaimer_text", label: "免责声明（显示在所有分类下方、社交媒体上方）", textarea: true, placeholder: "本站所有资源均来自网络，仅供学习交流使用..." },
     { key: "promo_text", label: "首页广告文字（留空则不显示）", placeholder: "🔥 限时活动：加入会员立享专属福利" },
     { key: "promo_url", label: "首页广告链接 URL（可选）", placeholder: "https://..." },
   ];
+
 
   async function uploadLogo(file: File) {
     setUploading(true);
