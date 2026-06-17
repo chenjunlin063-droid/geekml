@@ -666,16 +666,57 @@ function SiteSettingsManager() {
 
 
 
+        <div className="rounded border p-3 bg-muted/20">
+          <Label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={current.hide_header_logo === "1"}
+              onChange={(e) => setForm((s) => ({ ...s, hide_header_logo: e.target.checked ? "1" : "0" }))}
+            />
+            隐藏顶部导航栏的 Logo（避免与首页大 Logo 重复）
+          </Label>
+        </div>
+
         {fields.map((f) => (
           <div key={f.key}>
             <Label>{f.label}</Label>
-            <Input
-              value={current[f.key] ?? ""}
-              placeholder={f.placeholder}
-              onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
-            />
+            {f.textarea ? (
+              <Textarea
+                value={current[f.key] ?? ""}
+                placeholder={f.placeholder}
+                rows={4}
+                onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
+              />
+            ) : (
+              <Input
+                value={current[f.key] ?? ""}
+                placeholder={f.placeholder}
+                onChange={(e) => setForm((s) => ({ ...s, [f.key]: e.target.value }))}
+              />
+            )}
           </div>
         ))}
+
+        <div className="space-y-3 pt-2 border-t">
+          <h3 className="text-sm font-semibold pt-3">社交媒体设置</h3>
+          <p className="text-xs text-muted-foreground">
+            每个平台可选 "链接" 模式（点击跳转）或 "二维码" 模式（点击弹窗），可自定义图标、二维码、说明文字。
+          </p>
+          {[
+            { key: "qq", label: "QQ" },
+            { key: "wechat", label: "微信" },
+            { key: "bilibili", label: "哔哩哔哩" },
+            { key: "official", label: "公众号" },
+          ].map((p) => (
+            <SocialEditor
+              key={p.key}
+              platformKey={p.key}
+              platformLabel={p.label}
+              current={current}
+              setForm={setForm}
+            />
+          ))}
+        </div>
 
         <Button disabled={busy} onClick={save}>{busy ? "保存中..." : "保存设置"}</Button>
       </CardContent>
