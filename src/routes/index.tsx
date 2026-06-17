@@ -75,10 +75,10 @@ function Index() {
           <img
             src={settings.logo_url}
             alt={settings.site_name}
-            className="mx-auto mb-4 h-16 w-auto object-contain"
+            className="mx-auto mb-4 size-20 rounded-full object-cover border bg-card shadow-sm"
           />
         ) : null}
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
           {settings.hero_title}
         </h1>
         <p className="mt-2 text-muted-foreground">
@@ -91,6 +91,12 @@ function Index() {
               </>
             )}
         </p>
+        {settings.hero_extra_html ? (
+          <div
+            className="mt-3 text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-primary/80"
+            dangerouslySetInnerHTML={{ __html: settings.hero_extra_html }}
+          />
+        ) : null}
         <div className="mt-5 relative max-w-md mx-auto">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
@@ -126,6 +132,7 @@ function Index() {
           </div>
         ) : null}
       </header>
+
 
       {settings.home_layout === "compact" ? (
         <CompactLayout grouped={grouped} q={q} />
