@@ -68,87 +68,193 @@ function Index() {
 
   const total = softwares.length;
 
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeCat, setActiveCat] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem("sidebar_open");
+    if (saved !== null) setSidebarOpen(saved === "1");
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("sidebar_open", sidebarOpen ? "1" : "0");
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const ids = grouped.map((g) => g.category.id);
+    if (ids.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (visible) setActiveCat(visible.target.id.replace("cat-", ""));
+      },
+      { rootMargin: "-80px 0px -70% 0px", threshold: 0 },
+    );
+    ids.forEach((id) => {
+      const el = document.getElementById(`cat-${id}`);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [grouped]);
+
+  const scrollToCat = (id: string) => {
+    const el = document.getElementById(`cat-${id}`);
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - 70;
+    window.scrollTo({ top, behavior: "smooth" });
+  };
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <header className="mb-8 text-center">
-        {settings.logo_url ? (
-          <img
-            src={settings.logo_url}
-            alt={settings.site_name}
-            className="mx-auto mb-4 size-20 rounded-full object-cover border bg-card shadow-sm"
-          />
-        ) : null}
-        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-          {settings.hero_title}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {settings.hero_subtitle.includes("{count}")
-            ? settings.hero_subtitle.replace("{count}", String(total))
-            : (
-              <>
-                {settings.hero_subtitle}
-                <span className="ml-1 text-xs">（共 {total} 项）</span>
-              </>
-            )}
-        </p>
-        {settings.hero_extra_html ? (
-          <div
-            className="mt-3 text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-primary/80"
-            dangerouslySetInnerHTML={{ __html: settings.hero_extra_html }}
-          />
-        ) : null}
-        <div className="mt-5 relative max-w-md mx-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={settings.search_placeholder}
-            className="pl-9"
-          />
-        </div>
-        {settings.promo_text ? (
-          <div className="mt-6 flex justify-center">
-            {settings.promo_url ? (
-              <a
-                href={settings.promo_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2 px-3 py-1.5 text-sm md:text-base font-semibold transition-transform hover:scale-[1.03]"
-              >
-                <span className="animate-pulse text-orange-500 text-lg">📢</span>
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 underline decoration-orange-400/50 decoration-2 underline-offset-4 group-hover:decoration-orange-500">
-                  {settings.promo_text}
-                </span>
-                <span className="text-orange-500 transition-transform group-hover:translate-x-1">→</span>
-              </a>
-            ) : (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 text-sm md:text-base font-semibold">
-                <span className="animate-pulse text-orange-500 text-lg">📢</span>
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500">
-                  {settings.promo_text}
-                </span>
-              </div>
-            )}
+    <div className="flex">
+      {/* Sidebar */}
+      <aside
+        className={[
+          "sticky top-14 h-[calc(100vh-3.5rem)] shrink-0 border-r bg-card/50 backdrop-blur transition-all duration-300 overflow-hidden",
+          sidebarOpen ? "w-56" : "w-0 border-r-0",
+        ].join(" ")}
+        aria-hidden={!sidebarOpen}
+      >
+        <div className="h-full flex flex-col w-56">
+          <div className="flex items-center justify-between px-4 py-3 border-b">
+            <span className="text-sm font-semibold inline-flex items-center gap-2">
+              <LayoutGrid className="size-4" /> 分类导航
+            </span>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              className="text-muted-foreground hover:text-foreground"
+              aria-label="收起侧边栏"
+            >
+              <PanelLeftClose className="size-4" />
+            </button>
           </div>
-        ) : null}
-      </header>
-
-
-      {settings.home_layout === "compact" ? (
-        <CompactLayout grouped={grouped} q={q} />
-      ) : settings.home_layout === "card" ? (
-        <CardLayout grouped={grouped} q={q} mobileTwoCols={settings.card_mobile_columns === "2"} />
-      ) : (
-        <DefaultLayout grouped={grouped} q={q} />
-      )}
-
-      {settings.disclaimer_text ? (
-        <div className="mt-10 pt-6 border-t border-dashed text-xs text-muted-foreground leading-relaxed whitespace-pre-line max-w-4xl mx-auto text-center">
-          <div className="mb-1 font-medium text-foreground/80">免责声明</div>
-          {settings.disclaimer_text}
+          <nav className="flex-1 overflow-y-auto py-2">
+            {categories.map((c) => {
+              const count = softwares.filter((s) => s.category_id === c.id).length;
+              const active = activeCat === c.id;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => scrollToCat(c.id)}
+                  className={[
+                    "w-full flex items-center justify-between px-4 py-2 text-sm text-left transition-colors border-l-2",
+                    active
+                      ? "border-primary bg-primary/10 text-primary font-medium"
+                      : "border-transparent text-foreground/80 hover:bg-accent hover:border-primary/40",
+                  ].join(" ")}
+                >
+                  <span className="truncate">{c.name}</span>
+                  <span className="text-xs text-muted-foreground shrink-0 ml-2">{count}</span>
+                </button>
+              );
+            })}
+          </nav>
         </div>
+      </aside>
+
+      {/* Floating open button when collapsed */}
+      {!sidebarOpen ? (
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          className="fixed left-3 top-20 z-20 inline-flex items-center justify-center size-9 rounded-full border bg-card shadow-sm hover:bg-accent"
+          aria-label="展开分类导航"
+          title="展开分类导航"
+        >
+          <PanelLeftOpen className="size-4" />
+        </button>
       ) : null}
 
+      {/* Main */}
+      <div className="flex-1 min-w-0">
+        <div className="mx-auto max-w-7xl px-4 py-8">
+          <header className="mb-8 text-center">
+            {settings.logo_url ? (
+              <img
+                src={settings.logo_url}
+                alt={settings.site_name}
+                className="mx-auto mb-4 size-20 rounded-full object-cover border bg-card shadow-sm"
+              />
+            ) : null}
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+              {settings.hero_title}
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              {settings.hero_subtitle.includes("{count}")
+                ? settings.hero_subtitle.replace("{count}", String(total))
+                : (
+                  <>
+                    {settings.hero_subtitle}
+                    <span className="ml-1 text-xs">（共 {total} 项）</span>
+                  </>
+                )}
+            </p>
+            {settings.hero_extra_html ? (
+              <div
+                className="mt-3 text-sm text-muted-foreground max-w-2xl mx-auto leading-relaxed [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-primary/80"
+                dangerouslySetInnerHTML={{ __html: settings.hero_extra_html }}
+              />
+            ) : null}
+            <div className="mt-5 relative max-w-md mx-auto">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={settings.search_placeholder}
+                className="pl-9"
+              />
+            </div>
+            {settings.promo_text ? (
+              <div className="mt-6 flex justify-center">
+                {settings.promo_url ? (
+                  <a
+                    href={settings.promo_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group inline-flex items-center gap-2 px-3 py-1.5 text-sm md:text-base font-semibold transition-transform hover:scale-[1.03]"
+                  >
+                    <span className="animate-pulse text-orange-500 text-lg">📢</span>
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500 underline decoration-orange-400/50 decoration-2 underline-offset-4 group-hover:decoration-orange-500">
+                      {settings.promo_text}
+                    </span>
+                    <span className="text-orange-500 transition-transform group-hover:translate-x-1">→</span>
+                  </a>
+                ) : (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 text-sm md:text-base font-semibold">
+                    <span className="animate-pulse text-orange-500 text-lg">📢</span>
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-amber-500 via-orange-500 to-pink-500">
+                      {settings.promo_text}
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </header>
+
+
+          {settings.home_layout === "compact" ? (
+            <CompactLayout grouped={grouped} q={q} />
+          ) : settings.home_layout === "card" ? (
+            <CardLayout grouped={grouped} q={q} mobileTwoCols={settings.card_mobile_columns === "2"} />
+          ) : (
+            <DefaultLayout grouped={grouped} q={q} />
+          )}
+
+          {settings.disclaimer_text ? (
+            <div className="mt-10 pt-6 border-t border-dashed text-xs text-muted-foreground leading-relaxed whitespace-pre-line max-w-4xl mx-auto text-center">
+              <div className="mb-1 font-medium text-foreground/80">免责声明</div>
+              {settings.disclaimer_text}
+            </div>
+          ) : null}
+
+        </div>
+      </div>
     </div>
   );
 }
