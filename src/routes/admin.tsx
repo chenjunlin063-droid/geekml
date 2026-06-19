@@ -283,8 +283,8 @@ function SoftwareDialog({
   async function uploadIcon(file: File) {
     setUploading(true);
     const ext = file.name.split(".").pop() || "png";
-    const path = `icon-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
+    const path = `software-icons/icon-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("site-assets").upload(path, file);
     if (error) { setUploading(false); return toast.error(error.message); }
     const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
     setIconUrl(data.publicUrl);
@@ -573,8 +573,8 @@ function SiteSettingsManager() {
   async function uploadLogo(file: File) {
     setUploading(true);
     const ext = file.name.split(".").pop() || "png";
-    const path = `logo-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
+    const path = `logos/logo-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("site-assets").upload(path, file);
     if (error) { setUploading(false); return toast.error(error.message); }
     const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
     setForm((f) => ({ ...f, logo_url: data.publicUrl }));
@@ -746,8 +746,8 @@ function SocialEditor({
   async function uploadFile(file: File, kind: "qr" | "icon") {
     setUploading(kind);
     const ext = file.name.split(".").pop() || "png";
-    const path = `social-${platformKey}-${kind}-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("site-assets").upload(path, file, { upsert: true });
+    const path = `social/${platformKey}-${kind}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("site-assets").upload(path, file);
     if (error) { setUploading(null); return toast.error(error.message); }
     const { data } = supabase.storage.from("site-assets").getPublicUrl(path);
     setForm((f) => ({ ...f, [kind === "qr" ? qrKey : iconKey]: data.publicUrl }));
